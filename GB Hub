@@ -401,11 +401,13 @@ local function buildCode()
     varOf[Target] = rootVar
 
 
-    table.insert(lines, "-- pré-referências")
+table.insert(lines, "-- Criado Automaticamente Por GB Hub Oficial ☑️")
     table.insert(lines, "local Players = game:GetService(\"Players\")")
     table.insert(lines, "local PlayerGui = Players.LocalPlayer:WaitForChild(\"PlayerGui\")")
-    table.insert(lines, string.format("local %s = PlayerGui:WaitForChild(%q)", rootVar, Target.Name))
-    
+    table.insert(lines, string.format("local %s = Instance.new(\"ScreenGui\")", rootVar))
+    table.insert(lines, string.format("%s.Name = %q", rootVar, Target.Name))
+    table.insert(lines, string.format("%s.ResetOnSpawn = false", rootVar))
+    table.insert(lines, string.format("%s.Parent = PlayerGui", rootVar))    
 
     for _, child in ipairs(Target:GetChildren()) do
         emitObject(lines, child, rootVar, 0)
@@ -491,38 +493,11 @@ local localeId = LocalizationService.RobloxLocaleId or "en-us"
 localeId = string.lower(localeId)
 
 -- Lista de traduções
-local translations = {
-	["en-us"] = {
-		title = "Very Important Notice!!!",
-		text = "Please DO NOT click the Play button! If you do, your creation will disappear. If that happens, run the script again.",
-		ok = "OK"
-	},
-	["pt-br"] = {
+["pt-br"] = {
 		title = "Aviso Muito Importante!!!",
-		text = "Por favor, NÃO clique no botão Play ou Jogar! Se fizer isso, sua criação vai sumir. Caso isso aconteça, execute o script de novo.",
+		text = "Por favor, NÃO clique no botão Play/Jogar! Se fizer isso, sua criação vai sumir. Caso isso aconteça, execute de novo.",
 		ok = "OK"
 	},
-	["es-es"] = {
-		title = "¡¡¡Aviso Muy Importante!!!",
-		text = "Por favor, NO hagas clic en el botón de Jugar. Si lo haces, tu creación desaparecerá. Si eso sucede, ejecuta el script de nuevo.",
-		ok = "Aceptar"
-	},
-	["ja-jp"] = {
-		title = "とても重要な注意!!!",
-		text = "プレイボタンをクリックしないでください！クリックするとあなたの作成物が消えてしまいます。その場合はスクリプトをもう一度実行してください。",
-		ok = "OK"
-	},
-	["fr-fr"] = {
-		title = "Avis Très Important!!!",
-		text = "Veuillez NE PAS cliquer sur le bouton Jouer ! Si vous le faites, votre création disparaîtra. Si cela se produit, exécutez à nouveau le script.",
-		ok = "OK"
-	},
-	["de-de"] = {
-		title = "Sehr Wichtiger Hinweis!!!",
-		text = "Bitte NICHT auf die Schaltfläche 'Spielen' klicken! Wenn Sie dies tun, verschwindet Ihre Kreation. Wenn das passiert, führen Sie das Skript erneut aus.",
-		ok = "OK"
-	}
-}
 
 -- Pega tradução do idioma atual (ou inglês como padrão)
 local lang = translations[localeId] or translations["en-us"]
