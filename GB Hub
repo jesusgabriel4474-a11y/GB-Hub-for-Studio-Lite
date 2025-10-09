@@ -327,10 +327,10 @@ local usedNames = {}
 local function safeVar(base)
     base = tostring(base or "obj")
     -- substitui caracteres inválidos por underscore (mantém legibilidade)
-    base = base:gsub("%s+", "_")
-    base = base:gsub("[^%w_]", "_")
+    base = base:gsub("%s+", "")
+    base = base:gsub("[^%w_]", "")
     if base == "" then base = "obj" end
-    if base:match("^[0-9]") then base = "_" .. base end
+    if base:match("^[0-9]") then base = "" .. base end
     local name = base
     local i = 1
     while usedNames[name] do
