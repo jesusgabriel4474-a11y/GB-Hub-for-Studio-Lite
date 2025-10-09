@@ -474,38 +474,3 @@ if BtnCopy then
         end
     end)
 end
-
--- fim da Parte 2 corrigida
--- Coloque este script dentro de: StarterPlayerScripts
--- Mostra uma mensagem traduzida automaticamente quando o jogador entra no jogo
-
-local Players = game:GetService("Players")
-local StarterGui = game:GetService("StarterGui")
-local LocalizationService = game:GetService("LocalizationService")
-
-local player = Players.LocalPlayer
-
--- Espera o carregamento completo
-repeat task.wait() until game:IsLoaded()
-
--- Detecta idioma do jogador
-local localeId = LocalizationService.RobloxLocaleId or "en-us"
-localeId = string.lower(localeId)
-
--- Lista de traduções
-["pt-br"] = {
-		title = "Aviso Muito Importante!!!",
-		text = "Por favor, NÃO clique no botão Play/Jogar! Se fizer isso, sua criação vai sumir. Caso isso aconteça, execute de novo.",
-		ok = "OK"
-	},
-
--- Pega tradução do idioma atual (ou inglês como padrão)
-local lang = translations[localeId] or translations["en-us"]
-
--- Mostra mensagem
-StarterGui:SetCore("SendNotification", {
-	Title = lang.title,
-	Text = lang.text,
-	Button1 = lang.ok,
-	Duration = 999999999999
-})
