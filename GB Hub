@@ -219,7 +219,7 @@ Code.TextXAlignment = Enum.TextXAlignment.Left
 Code.TextYAlignment = Enum.TextYAlignment.Top
 Code.Font = Enum.Font.Code
 Code.TextColor3 = Color3.fromRGB(235,235,235)
-Code.TextSize = 14
+Code.TextSize = 8
 Code.TextWrapped = false
 Code.Text = ""
 Code.Size = UDim2.new(1,-8,0,300)
@@ -460,7 +460,7 @@ if BtnCopy then
                 StarterGui:SetCore("SendNotification", {
                     Title = "Copiado",
                     Text = "O código foi copiado para a área de transferência!",
-                    Duration = 4
+                    Duration = 5
                 })
             end)
         else
@@ -468,7 +468,7 @@ if BtnCopy then
                 StarterGui:SetCore("SendNotification", {
                     Title = "Aviso",
                     Text = "Não foi possível copiar automaticamente neste ambiente.",
-                    Duration = 4
+                    Duration = 5
                 })
             end)
         end
