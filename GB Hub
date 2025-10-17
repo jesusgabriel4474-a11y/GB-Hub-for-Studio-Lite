@@ -51,14 +51,14 @@ Frame.Parent = Inspector
 Instance.new("UICorner", Frame).CornerRadius = UDim.new(0,12)
 
 -- BOTÃO GB HUB
-local BtnGBHub = Instance.new("TextButton")
+local BtnGBHub = Instance.new("ImageButton")
 BtnGBHub.Size = UDim2.new(0, 50, 0, 45)
 BtnGBHub.Position = UDim2.new(0.5, -25, 0, -35)
 BtnGBHub.BackgroundColor3 = Color3.fromRGB(60,60,60)
 BtnGBHub.TextColor3 = Color3.fromRGB(255,255,255)
 BtnGBHub.Font = Enum.Font.GothamBold
 BtnGBHub.TextSize = 18
-BtnGBHub.Text = "GB Hub"
+BtnGBHub.Image = "122605642301391"
 BtnGBHub.Parent = Inspector
 Instance.new("UICorner", BtnGBHub)
 local strokeGB = Instance.new("UIStroke", BtnGBHub)
