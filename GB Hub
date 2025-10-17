@@ -311,9 +311,9 @@ local CORE_PROPS = {
 
 local EXTRA_PROPS = {
     "BackgroundTransparency","BorderSizePixel","BorderColor3","AnchorPoint","Rotation",
-    "LayoutOrder","Active","ClipsDescendants","AutomaticSize","SizeConstraint","Selectable",
-    "Text","TextColor3","TextSize","Font","RichText","TextWrapped","TextScaled",
-    "TextXAlignment","TextYAlignment","LineHeight","PlaceholderText","PlaceholderColor3","ClearTextOnFocus",
+    "LayoutOrder","ClipsDescendants","AutomaticSize","SizeConstraint",
+    "Text","TextColor3","TextSize","Font","TextWrapped","TextScaled",
+    "TextXAlignment","TextYAlignment","PlaceholderText","PlaceholderColor3","ClearTextOnFocus",
     "CanvasSize","CanvasPosition","ScrollingEnabled","ScrollBarThickness","AutomaticCanvasSize",
     "Image","ImageColor3","ImageTransparency","ScaleType","SliceCenter","SliceScale","TileSize","ResampleMode",
     "Color","Thickness","Transparency","ApplyStrokeMode","LineJoinMode",
@@ -446,20 +446,23 @@ local function connectTargetListeners(t)
     end)
 end
 connectTargetListeners(Target)
-
--- copiar para clipboard
+-- copiar para clipboard (corrigido para copiar TODO o código gerado real)
 if BtnCopy then
     BtnCopy.MouseButton1Click:Connect(function()
+        local fullCode = buildCode() -- gera novamente o texto completo, sem depender do que aparece no Code
+
         local ok = false
         if typeof(setclipboard) == "function" then
-            pcall(function() setclipboard(Code.Text) end)
+            pcall(function() setclipboard(fullCode) end)
             ok = true
         end
+
+        local StarterGui = game:GetService("StarterGui")
         if ok then
             pcall(function()
                 StarterGui:SetCore("SendNotification", {
-                    Title = "Copiado",
-                    Text = "O código foi copiado para a área de transferência!",
+                    Title = "Copiado com sucesso",
+                    Text = "O código completo foi copiado para a área de transferência!",
                     Duration = 5
                 })
             end)
