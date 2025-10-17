@@ -57,6 +57,7 @@ BtnGBHub.Size = UDim2.new(0, 50, 0, 45)
 BtnGBHub.Position = UDim2.new(0.5, -25, 0, -35)
 BtnGBHub.BackgroundColor3 = Color3.fromRGB(60,60,60)
 BtnGBHub.Image = "rbxthumb://type=Asset&id=104648175914694&w=420&h=420"
+BtnGBHub.Name = "GBHub"
 BtnGBHub.Parent = Inspector
 Instance.new("UICorner", BtnGBHub)
 local strokeGB = Instance.new("UIStroke", BtnGBHub)
@@ -487,7 +488,7 @@ local LocalPlayer = Players.LocalPlayer
 local CoreGui = game:GetService("CoreGui")
 local Inspector = CoreGui:WaitForChild("InspectorGui")
 local BtnGBHub -- <- Coloque aqui o botão GB Hub que será revelado no final
--- BtnGBHub = Inspector:WaitForChild("NomeDoSeuBotao") 
+BtnGBHub = Inspector:WaitForChild("GBHub") 
 
 BtnGBHub.Visible = false -- garante que o botão começa invisível
 
