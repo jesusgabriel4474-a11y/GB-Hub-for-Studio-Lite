@@ -1,9 +1,9 @@
--- ░██████╗░██████╗░  ██╗░░██╗██╗░░░██╗██████╗░
--- ██╔════╝░██╔══██╗  ██║░░██║██║░░░██║██╔══██╗
--- ██║░░██╗░██████╦╝  ███████║██║░░░██║██████╦╝
--- ██║░░╚██╗██╔══██╗  ██╔══██║██║░░░██║██╔══██╗
--- ╚██████╔╝██████╦╝  ██║░░██║╚██████╔╝██████╦╝
--- ░╚═════╝░╚═════╝░  ╚═╝░░╚═╝░╚═════╝░╚═════╝░
+print(" ░██████╗░██████╗░  ██╗░░██╗██╗░░░██╗██████╗░")
+print(" ██╔════╝░██╔══██╗  ██║░░██║██║░░░██║██╔══██╗")
+print(" ██║░░██╗░██████╦╝  ███████║██║░░░██║██████╦╝")
+print(" ██║░░╚██╗██╔══██╗  ██╔══██║██║░░░██║██╔══██╗")
+print(" ╚██████╔╝██████╦╝  ██║░░██║╚██████╔╝██████╦╝")
+print(" ░╚═════╝░╚═════╝░  ╚═╝░░╚═╝░╚═════╝░╚═════╝░")
 
 -- Coloque este script dentro de: StarterPlayerScripts (LocalScript)
 
@@ -55,7 +55,7 @@ local BtnGBHub = Instance.new("ImageButton")
 BtnGBHub.Size = UDim2.new(0, 50, 0, 45)
 BtnGBHub.Position = UDim2.new(0.5, -25, 0, -35)
 BtnGBHub.BackgroundColor3 = Color3.fromRGB(60,60,60)
-BtnGBHub.Image = "122605642301391"
+BtnGBHub.Image = "124170847554403"
 BtnGBHub.Parent = Inspector
 Instance.new("UICorner", BtnGBHub)
 local strokeGB = Instance.new("UIStroke", BtnGBHub)
