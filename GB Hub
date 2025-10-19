@@ -950,3 +950,25 @@ task.spawn(function()
 		BtnGBHub.Visible = true
 	end
 end)
+
+--=============
+-- Coloque este script dentro de: CoreGui.InspectorGui.Window.BtnCopy (como LocalScript)
+--=============
+local btn = script.Parent
+local selectionService = game:GetService("Selection")
+
+-- Função que verifica se há algo selecionado
+local function updateButtonVisibility()
+	local selected = selectionService:Get()
+	if #selected > 0 then
+		btn.Visible = false -- Algo está selecionado → botão invisível
+	else
+		btn.Visible = true -- Nada selecionado → botão visível
+	end
+end
+
+-- Atualiza imediatamente
+updateButtonVisibility()
+
+-- Atualiza sempre que algo for selecionado ou desselecionado
+selectionService.SelectionChanged:Connect(updateButtonVisibility)
