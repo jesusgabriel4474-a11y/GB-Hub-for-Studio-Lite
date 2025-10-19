@@ -951,18 +951,28 @@ task.spawn(function()
 	end
 end)
 
--- sistema para proteger botão Copy [evitar erros✓]
+-- =========================================
+-- Sistema visual de botão / clone funcional
+-- =========================================
+
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
+local PlayerGui = player:WaitForChild("PlayerGui")
 
--- botão original
-local BtnCopy = script:FindFirstChild("BtnCopy") or script.Parent:FindFirstChild("BtnCopy")
+-- Botão original (altere para o caminho correto)
+local BtnCopy = PlayerGui:FindFirstChild("YourGuiName") and PlayerGui.YourGuiName:FindFirstChild("BtnCopy")
 
--- objeto selecionado (use o mesmo que o seu sistema usa)
-local selectedObject = nil  -- substitua por sua variável real se existir (ex.: _G.Selected)
+if not BtnCopy then
+	warn("BtnCopy não encontrado!")
+	return
+end
 
--- função para clonar aparência do botão
+-- Variável de objeto selecionado
+local selectedObject = nil
+
+-- Função para criar o clone visual do botão
 local function cloneButtonAppearance(button)
+	-- Cria o TextLabel clone
 	local label = Instance.new("TextLabel")
 	label.Name = "BtnCopy_Clone"
 	label.Size = button.Size
@@ -980,39 +990,48 @@ local function cloneButtonAppearance(button)
 	label.ZIndex = button.ZIndex + 1
 	label.Parent = button.Parent
 
-	-- Copiar decoradores UI
+	-- Copiar decoradores UI (UICorner, UIStroke, UIGradient, UIAspectRatioConstraint)
 	for _, obj in ipairs(button:GetChildren()) do
 		if obj:IsA("UICorner") or obj:IsA("UIStroke") or obj:IsA("UIGradient") or obj:IsA("UIAspectRatioConstraint") then
-			local clone = obj:Clone()
-			clone.Parent = label
+			local cloneDecor = obj:Clone()
+			cloneDecor.Parent = label
 		end
 	end
 
 	return label
 end
 
-if BtnCopy then
-	local clone = cloneButtonAppearance(BtnCopy)
+-- Criar clone
+local cloneLabel = cloneButtonAppearance(BtnCopy)
 
-	-- Função de atualização visual
-	local function updateVisibility()
-		if selectedObject then
-			BtnCopy.Visible = false
-			clone.Visible = true
-		else
-			BtnCopy.Visible = true
-			clone.Visible = false
-		end
+-- Atualiza visibilidade baseado em seleção
+local function updateVisibility()
+	if selectedObject then
+		BtnCopy.Visible = false
+		cloneLabel.Visible = true
+	else
+		BtnCopy.Visible = true
+		cloneLabel.Visible = false
 	end
-
-	-- Exemplo: detecção de seleção (substitua pelo seu evento de seleção real)
-	-- Aqui estou simulando alternar o estado a cada clique no botão
-	BtnCopy.MouseButton1Click:Connect(function()
-		if selectedObject then
-			selectedObject = nil
-		else
-			selectedObject = workspace:FindFirstChildWhichIsA("Part") or Instance.new("Part")
-		end
-		updateVisibility()
-	end)
 end
+
+-- Evento de detecção de seleção
+-- Substitua este trecho pelo seu sistema real de seleção de objetos
+-- Exemplo genérico de teste: alterna seleção ao clicar no botão
+BtnCopy.MouseButton1Click:Connect(function()
+	if selectedObject then
+		selectedObject = nil
+	else
+		-- Simulando seleção de algum objeto no Workspace
+		selectedObject = workspace:FindFirstChildWhichIsA("BasePart")
+	end
+	updateVisibility()
+end)
+
+-- Atualização automática periódica (caso você altere a seleção de outro jeito)
+task.spawn(function()
+	while true do
+		updateVisibility()
+		task.wait(0.1) -- verificação a cada 0.1s
+	end
+end)
