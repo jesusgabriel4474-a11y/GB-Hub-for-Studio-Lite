@@ -1,4 +1,4 @@
-
+ 
 -- Coloque este script dentro de: StarterPlayerScripts (LocalScript)
 
 local Players = game:GetService("Players")
@@ -950,3 +950,69 @@ task.spawn(function()
 		BtnGBHub.Visible = true
 	end
 end)
+
+-- sistema para proteger botão Copy [evitar erros✓]
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+-- botão original
+local BtnCopy = script:FindFirstChild("BtnCopy") or script.Parent:FindFirstChild("BtnCopy")
+
+-- objeto selecionado (use o mesmo que o seu sistema usa)
+local selectedObject = nil  -- substitua por sua variável real se existir (ex.: _G.Selected)
+
+-- função para clonar aparência do botão
+local function cloneButtonAppearance(button)
+	local label = Instance.new("TextLabel")
+	label.Name = "BtnCopy_Clone"
+	label.Size = button.Size
+	label.Position = button.Position
+	label.AnchorPoint = button.AnchorPoint
+	label.BackgroundColor3 = button.BackgroundColor3
+	label.BackgroundTransparency = 0.5
+	label.Text = button.Text
+	label.TextColor3 = button.TextColor3
+	label.TextSize = button.TextSize
+	label.Font = button.Font
+	label.TextScaled = button.TextScaled
+	label.TextWrapped = button.TextWrapped
+	label.Visible = false
+	label.ZIndex = button.ZIndex + 1
+	label.Parent = button.Parent
+
+	-- Copiar decoradores UI
+	for _, obj in ipairs(button:GetChildren()) do
+		if obj:IsA("UICorner") or obj:IsA("UIStroke") or obj:IsA("UIGradient") or obj:IsA("UIAspectRatioConstraint") then
+			local clone = obj:Clone()
+			clone.Parent = label
+		end
+	end
+
+	return label
+end
+
+if BtnCopy then
+	local clone = cloneButtonAppearance(BtnCopy)
+
+	-- Função de atualização visual
+	local function updateVisibility()
+		if selectedObject then
+			BtnCopy.Visible = false
+			clone.Visible = true
+		else
+			BtnCopy.Visible = true
+			clone.Visible = false
+		end
+	end
+
+	-- Exemplo: detecção de seleção (substitua pelo seu evento de seleção real)
+	-- Aqui estou simulando alternar o estado a cada clique no botão
+	BtnCopy.MouseButton1Click:Connect(function()
+		if selectedObject then
+			selectedObject = nil
+		else
+			selectedObject = workspace:FindFirstChildWhichIsA("Part") or Instance.new("Part")
+		end
+		updateVisibility()
+	end)
+end
