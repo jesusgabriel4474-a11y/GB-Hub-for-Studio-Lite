@@ -528,21 +528,59 @@ if BtnCopy then
     end)
 end
 
--=============
 -- Coloque este script dentro de: CoreGui.InspectorGui.Window
 -- Nome sugerido: UniversalSelectDrag
--=============
+
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local player = Players.LocalPlayer
 local PlayerGui = player:WaitForChild("PlayerGui")
 local TouchGui = PlayerGui:FindFirstChild("TouchGui")
 
 -- ====================
--- CONFIGURAÇÕES
+-- CONFIGURAÇÕES DO REMOTE
+-- ====================
+-- Troque este nome de pasta se você já tiver uma pasta específica em ReplicatedStorage
+local REMOTE_FOLDER_NAME = "StudioLiteFolder"      -- <--- ajuste aqui se quiser
+local REMOTE_EVENT_NAME = "PVP?" -- nome do RemoteEvent
+
+-- Garante que exista a pasta e o RemoteEvent em ReplicatedStorage
+local function ensureRemote()
+    local folder = ReplicatedStorage:FindFirstChild(REMOTE_FOLDER_NAME)
+    if not folder then
+        folder = Instance.new("Folder")
+        folder.Name = REMOTE_FOLDER_NAME
+        folder.Parent = ReplicatedStorage
+    end
+
+    local remote = folder:FindFirstChild(REMOTE_EVENT_NAME)
+    if not remote then
+        remote = Instance.new("RemoteEvent")
+        remote.Name = REMOTE_EVENT_NAME
+        remote.Parent = folder
+    end
+
+    return folder, remote
+end
+
+local remoteFolder, selectionRemote = ensureRemote()
+
+-- Função segura para disparar evento ao servidor (pode falhar em ambientes sem servidor autorizado)
+local function fireSelectionRemote(state)
+    -- pcall para evitar erros se FireServer não estiver permitido no ambiente
+    pcall(function()
+        if selectionRemote and selectionRemote.FireServer then
+            selectionRemote:FireServer(state)
+        end
+    end)
+end
+
+-- ====================
+-- CONFIGURAÇÕES DO INSPECTOR
 -- ====================
 local InspectorGui = CoreGui:WaitForChild("InspectorGui")
 local Window = InspectorGui:WaitForChild("Window")
@@ -556,7 +594,7 @@ local startPos = nil
 local resizeButtons = {}
 
 -- ====================
--- BOTÃO PRINCIPAL DE SELEÇÃO
+-- BOTÃO PRINCIPAL DE SELEÇÃO (interface existente)
 -- ====================
 local selectButton = Instance.new("TextButton")
 selectButton.Name = "SelectButton"
@@ -571,307 +609,311 @@ selectButton.TextColor3 = Color3.new(1,1,1)
 Instance.new("UICorner", selectButton).CornerRadius = UDim.new(0,8)
 
 -- ====================
+-- Atualiza visibilidade do botão localmente (uso interno)
+-- ====================
+local function updateLocalSelectButtonVisibility()
+    if selectedObject ~= nil then
+        -- esconde enquanto algo estiver selecionado
+        if selectButton then
+            BtnCopy.Visible = false
+        end
+    else
+        if selectButton then
+            BtnCopy.Visible = true
+        end
+    end
+end
+
+-- (Opcional) se quiser forçar atualização constante por segurança:
+RunService.Heartbeat:Connect(function()
+    updateLocalSelectButtonVisibility()
+end)
+
+-- ====================
 -- FUNÇÃO DE VALIDAÇÃO
 -- ====================
 local function isValidObject(obj)
-if not obj:IsA("GuiObject") then return false end
-if obj:IsDescendantOf(InspectorGui) then return false end
-if obj:IsDescendantOf(PlayerGui:FindFirstChild("StudioGui") or {}) then return false end
-if obj:IsDescendantOf(CoreGui) and not obj:IsDescendantOf(InspectorGui) then return false end
-if TouchGui and obj:IsDescendantOf(TouchGui) then return false end
-if obj.Name == "DragButton" then return false end
-return true
+    if not obj:IsA("GuiObject") then return false end
+    if obj:IsDescendantOf(InspectorGui) then return false end
+    if obj:IsDescendantOf(PlayerGui:FindFirstChild("StudioGui") or {}) then return false end
+    if obj:IsDescendantOf(CoreGui) and not obj:IsDescendantOf(InspectorGui) then return false end
+    if TouchGui and obj:IsDescendantOf(TouchGui) then return false end
+    if obj.Name == "DragButton" then return false end
+    return true
 end
 
 -- ====================
--- DESTRUIR DragButtons DENTRO DE EXPLORERPANEL
+-- DESTRUIR DragButtons DENTRO DE EXPLORERPANEL (mantido)
 -- ====================
 local function destroyDragButtons()
-local studioGui = PlayerGui:FindFirstChild("StudioGui")
-if not studioGui then return end
-local explorerPanel = studioGui:FindFirstChild("ExplorerPanel")
-if not explorerPanel then return end
+    local studioGui = PlayerGui:FindFirstChild("StudioGui")
+    if not studioGui then return end
+    local explorerPanel = studioGui:FindFirstChild("ExplorerPanel")
+    if not explorerPanel then return end
 
-for _, obj in ipairs(explorerPanel:GetDescendants()) do
-if (obj:IsA("TextButton") or obj:IsA("ImageButton")) and (obj.Name == "DragButton" or (obj:IsA("TextButton") and obj.Text == "DragButton")) then
-obj.Visible = false
-obj:Destroy()
-end
-end
-
+    for _, obj in ipairs(explorerPanel:GetDescendants()) do
+        if (obj:IsA("TextButton") or obj:IsA("ImageButton")) and (obj.Name == "DragButton" or (obj:IsA("TextButton") and obj.Text == "DragButton")) then
+            obj.Visible = false
+            obj:Destroy()
+        end
+    end
 end
 destroyDragButtons()
 
 if PlayerGui:FindFirstChild("StudioGui") and PlayerGui.StudioGui:FindFirstChild("ExplorerPanel") then
-PlayerGui.StudioGui.ExplorerPanel.DescendantAdded:Connect(function(obj)
-if (obj:IsA("TextButton") or obj:IsA("ImageButton")) and (obj.Name == "DragButton" or (obj:IsA("TextButton") and obj.Text == "DragButton")) then
-obj.Visible = false
-obj:Destroy()
-end
-end)
+    PlayerGui.StudioGui.ExplorerPanel.DescendantAdded:Connect(function(obj)
+        if (obj:IsA("TextButton") or obj:IsA("ImageButton")) and (obj.Name == "DragButton" or (obj:IsA("TextButton") and obj.Text == "DragButton")) then
+            obj.Visible = false
+            obj:Destroy()
+        end
+    end)
 end
 
 -- ====================
--- CRIAR DragButton
+-- CRIAR DragButton (mantido)
 -- ====================
 local function createDragButton(gui)
-if dragButton then dragButton:Destroy() end
-dragButton = Instance.new("TextButton")
-dragButton.Name = "Ignore Esse Botão"
-dragButton.BackgroundTransparency = 1
-dragButton.BorderSizePixel = 0
-dragButton.Text = ""
-dragButton.Size = UDim2.new(1,0,1,0)
-dragButton.Position = UDim2.new(0,0,0,0)
-dragButton.ZIndex = HIGH_ZINDEX
-dragButton.Active = true
-dragButton.Parent = gui
+    if dragButton then dragButton:Destroy() end
+    dragButton = Instance.new("TextButton")
+    dragButton.Name = "Ignore Esse Botão"
+    dragButton.BackgroundTransparency = 1
+    dragButton.BorderSizePixel = 0
+    dragButton.Text = ""
+    dragButton.Size = UDim2.new(1,0,1,0)
+    dragButton.Position = UDim2.new(0,0,0,0)
+    dragButton.ZIndex = HIGH_ZINDEX
+    dragButton.Active = true
+    dragButton.Parent = gui
 
-dragButton.InputBegan:Connect(function(input)
-if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-dragging = true
-dragStart = Vector2.new(input.Position.X, input.Position.Y)
-startPos = gui.Position
-end
-end)
-
+    dragButton.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = Vector2.new(input.Position.X, input.Position.Y)
+            startPos = gui.Position
+        end
+    end)
 end
 
 -- ====================
--- CRIAR BOTÕES DE REDIMENSIONAMENTO
+-- CRIAR BOTÕES DE REDIMENSIONAMENTO (mantido)
 -- ====================
 local function createResizeButtons(parent)
-for _, btn in ipairs(resizeButtons) do btn:Destroy() end
-resizeButtons = {}
+    for _, btn in ipairs(resizeButtons) do btn:Destroy() end
+    resizeButtons = {}
 
-local positions = {
-{"TopLeft"}, {"TopRight"}, {"BottomLeft"}, {"BottomRight"},
-{"TopMiddle"}, {"BottomMiddle"}, {"MiddleLeft"}, {"MiddleRight"}
-}
+    local positions = {
+        {"TopLeft"}, {"TopRight"}, {"BottomLeft"}, {"BottomRight"},
+        {"TopMiddle"}, {"BottomMiddle"}, {"MiddleLeft"}, {"MiddleRight"}
+    }
 
-for _, pos in ipairs(positions) do
-local btn = Instance.new("TextButton")
-btn.Size = UDim2.new(0,10,0,10)
-btn.BackgroundColor3 = Color3.new(1,1,1)
-btn.BorderSizePixel = 0
-btn.Text = ""
-btn.ZIndex = HIGH_ZINDEX + 1
-btn.Parent = parent
+    for _, pos in ipairs(positions) do
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(0,10,0,10)
+        btn.BackgroundColor3 = Color3.new(1,1,1)
+        btn.BorderSizePixel = 0
+        btn.Text = ""
+        btn.ZIndex = HIGH_ZINDEX + 1
+        btn.Parent = parent
 
-local resizing = false    
-local startSize = nil    
-local startPosMouse = nil    
+        local resizing = false
+        local startSize = nil
+        local startPosMouse = nil
 
-btn.InputBegan:Connect(function(input)    
-	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then    
-		resizing = true    
-		startSize = parent.Size    
-		startPosMouse = Vector2.new(input.Position.X, input.Position.Y)    
-	end    
-end)    
-btn.InputEnded:Connect(function(input)    
-	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then    
-		resizing = false    
-	end    
-end)    
+        btn.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                resizing = true
+                startSize = parent.Size
+                startPosMouse = Vector2.new(input.Position.X, input.Position.Y)
+            end
+        end)
+        btn.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                resizing = false
+            end
+        end)
 
-UserInputService.InputChanged:Connect(function(input)    
-	if resizing and input.UserInputType == Enum.UserInputType.MouseMovement then    
-		local delta = Vector2.new(input.Position.X, input.Position.Y) - startPosMouse    
-		local newSize = startSize    
+        UserInputService.InputChanged:Connect(function(input)
+            if resizing and input.UserInputType == Enum.UserInputType.MouseMovement then
+                local delta = Vector2.new(input.Position.X, input.Position.Y) - startPosMouse
+                local newSize = startSize
 
-		if pos[1] == "TopLeft" then    
-			newSize = UDim2.new(startSize.X.Scale, startSize.X.Offset - delta.X, startSize.Y.Scale, startSize.Y.Offset - delta.Y)    
-		elseif pos[1] == "TopRight" then    
-			newSize = UDim2.new(startSize.X.Scale, startSize.X.Offset + delta.X, startSize.Y.Scale, startSize.Y.Offset - delta.Y)    
-		elseif pos[1] == "BottomLeft" then    
-			newSize = UDim2.new(startSize.X.Scale, startSize.X.Offset - delta.X, startSize.Y.Scale, startSize.Y.Offset + delta.Y)    
-		elseif pos[1] == "BottomRight" then    
-			newSize = UDim2.new(startSize.X.Scale, startSize.X.Offset + delta.X, startSize.Y.Scale, startSize.Y.Offset + delta.Y)    
-		elseif pos[1] == "TopMiddle" then    
-			newSize = UDim2.new(startSize.X.Scale, startSize.X.Offset, startSize.Y.Scale, startSize.Y.Offset - delta.Y)    
-		elseif pos[1] == "BottomMiddle" then    
-			newSize = UDim2.new(startSize.X.Scale, startSize.X.Offset, startSize.Y.Scale, startSize.Y.Offset + delta.Y)    
-		elseif pos[1] == "MiddleLeft" then    
-			newSize = UDim2.new(startSize.X.Scale, startSize.X.Offset - delta.X, startSize.Y.Scale, startSize.Y.Offset)    
-		elseif pos[1] == "MiddleRight" then    
-			newSize = UDim2.new(startSize.X.Scale, startSize.X.Offset + delta.X, startSize.Y.Scale, startSize.Y.Offset)    
-		end    
-		parent.Size = newSize    
-	end    
-end)    
+                if pos[1] == "TopLeft" then
+                    newSize = UDim2.new(startSize.X.Scale, startSize.X.Offset - delta.X, startSize.Y.Scale, startSize.Y.Offset - delta.Y)
+                elseif pos[1] == "TopRight" then
+                    newSize = UDim2.new(startSize.X.Scale, startSize.X.Offset + delta.X, startSize.Y.Scale, startSize.Y.Offset - delta.Y)
+                elseif pos[1] == "BottomLeft" then
+                    newSize = UDim2.new(startSize.X.Scale, startSize.X.Offset - delta.X, startSize.Y.Scale, startSize.Y.Offset + delta.Y)
+                elseif pos[1] == "BottomRight" then
+                    newSize = UDim2.new(startSize.X.Scale, startSize.X.Offset + delta.X, startSize.Y.Scale, startSize.Y.Offset + delta.Y)
+                elseif pos[1] == "TopMiddle" then
+                    newSize = UDim2.new(startSize.X.Scale, startSize.X.Offset, startSize.Y.Scale, startSize.Y.Offset - delta.Y)
+                elseif pos[1] == "BottomMiddle" then
+                    newSize = UDim2.new(startSize.X.Scale, startSize.X.Offset, startSize.Y.Scale, startSize.Y.Offset + delta.Y)
+                elseif pos[1] == "MiddleLeft" then
+                    newSize = UDim2.new(startSize.X.Scale, startSize.X.Offset - delta.X, startSize.Y.Scale, startSize.Y.Offset)
+                elseif pos[1] == "MiddleRight" then
+                    newSize = UDim2.new(startSize.X.Scale, startSize.X.Offset + delta.X, startSize.Y.Scale, startSize.Y.Offset)
+                end
+                parent.Size = newSize
+            end
+        end)
 
-table.insert(resizeButtons, btn)
-
-end
-
+        table.insert(resizeButtons, btn)
+    end
 end
 
 -- ====================
 -- ATUALIZA POSIÇÃO DOS BOTÕES
 -- ====================
 RunService.RenderStepped:Connect(function()
-if dragButton then
-local size = dragButton.AbsoluteSize
-local pos = dragButton.AbsolutePosition
-for i, btn in ipairs(resizeButtons) do
-if i == 1 then btn.Position = UDim2.new(0,0,0,0) end
-if i == 2 then btn.Position = UDim2.new(1,-btn.AbsoluteSize.X,0,0) end
-if i == 3 then btn.Position = UDim2.new(0,0,1,-btn.AbsoluteSize.Y) end
-if i == 4 then btn.Position = UDim2.new(1,-btn.AbsoluteSize.X,1,-btn.AbsoluteSize.Y) end
-if i == 5 then btn.Position = UDim2.new(0.5,-btn.AbsoluteSize.X/2,0,0) end
-if i == 6 then btn.Position = UDim2.new(0.5,-btn.AbsoluteSize.X/2,1,-btn.AbsoluteSize.Y) end
-if i == 7 then btn.Position = UDim2.new(0,0,0.5,-btn.AbsoluteSize.Y/2) end
-if i == 8 then btn.Position = UDim2.new(1,-btn.AbsoluteSize.X,0.5,-btn.AbsoluteSize.Y/2) end
-end
-end
+    if dragButton then
+        for i, btn in ipairs(resizeButtons) do
+            if i == 1 then btn.Position = UDim2.new(0,0,0,0) end
+            if i == 2 then btn.Position = UDim2.new(1,-btn.AbsoluteSize.X,0,0) end
+            if i == 3 then btn.Position = UDim2.new(0,0,1,-btn.AbsoluteSize.Y) end
+            if i == 4 then btn.Position = UDim2.new(1,-btn.AbsoluteSize.X,1,-btn.AbsoluteSize.Y) end
+            if i == 5 then btn.Position = UDim2.new(0.5,-btn.AbsoluteSize.X/2,0,0) end
+            if i == 6 then btn.Position = UDim2.new(0.5,-btn.AbsoluteSize.X/2,1,-btn.AbsoluteSize.Y) end
+            if i == 7 then btn.Position = UDim2.new(0,0,0.5,-btn.AbsoluteSize.Y/2) end
+            if i == 8 then btn.Position = UDim2.new(1,-btn.AbsoluteSize.X,0.5,-btn.AbsoluteSize.Y/2) end
+        end
+    end
 end)
 
 -- ====================
--- SELEÇÃO DE OBJETO
+-- SELEÇÃO DE OBJETO (centraliza a lógica para mandar o remote e atualizar local)
 -- ====================
+local function onSelectedObjectChanged(newObj)
+    selectedObject = newObj
+
+    -- atualização local imediata do botão
+    updateLocalSelectButtonVisibility()
+
+    -- avisa o servidor via RemoteEvent (true se selecionado, false se nil)
+    local state = (selectedObject ~= nil)
+    -- usamos pcall para evitar erros caso FireServer esteja bloqueado
+    fireSelectionRemote(state)
+end
+
 local function selectGui(gui)
-selectedObject = gui
-selectButton.Text = "Selecionado: "..gui.Name.."  Deselecionar "
-createDragButton(gui)
-createResizeButtons(dragButton)
+    onSelectedObjectChanged(gui)
+    if gui then
+        selectButton.Text = "Selecionado: "..gui.Name.."  Deselecionar 💠"
+        createDragButton(gui)
+        createResizeButtons(dragButton)
+    end
 end
-
--- ✅ Coloque este script dentro de: CoreGui.InspectorGui.Window (como LocalScript)
-
-local selectionService = game:GetService("Selection")
-
--- Espera o botão BtnCopy existir
-local btn = script.Parent:WaitForChild("BtnCopy")
-
--- Função para atualizar visibilidade
-local function updateButtonVisibility()
-	local selected = selectionService:Get()
-	if btn and btn:IsA("GuiButton") then
-		if #selected > 0 then
-			btn.Visible = false -- invisível quando algo está selecionado
-		else
-			btn.Visible = true -- visível quando nada está selecionado
-		end
-	end
-end
-
--- Atualiza ao iniciar
-updateButtonVisibility()
-
--- Atualiza quando a seleção mudar
-selectionService.SelectionChanged:Connect(updateButtonVisibility)
 
 -- ====================
 -- ARRASTO
 -- ====================
 UserInputService.InputChanged:Connect(function(input)
-if dragging and dragButton and selectedObject then
-if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-local posVec = Vector2.new(input.Position.X, input.Position.Y)
-local delta = posVec - dragStart
-selectedObject.Position = UDim2.new(
-startPos.X.Scale,
-startPos.X.Offset + delta.X,
-startPos.Y.Scale,
-startPos.Y.Offset + delta.Y
-)
-end
-end
+    if dragging and dragButton and selectedObject then
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            local posVec = Vector2.new(input.Position.X, input.Position.Y)
+            local delta = posVec - dragStart
+            selectedObject.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
+        end
+    end
 end)
 
 UserInputService.InputEnded:Connect(function(input)
-if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-dragging = false
-end
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+    end
 end)
 
 -- ====================
 -- CRIAR LISTA DE SELEÇÃO
 -- ====================
 local function createSelectionList()
-if Window:FindFirstChild("SelectionList") then
-Window.SelectionList:Destroy()
-end
+    if Window:FindFirstChild("SelectionList") then
+        Window.SelectionList:Destroy()
+    end
 
-local listFrame = Instance.new("ScrollingFrame")  
-listFrame.Name = "SelectionList"  
-listFrame.Parent = Window  
-listFrame.Position = UDim2.new(0, 0, 0, 0)  
-listFrame.Size = UDim2.new(0, 250, 0, 300)  
-listFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)  
-listFrame.BorderSizePixel = 0  
-listFrame.ClipsDescendants = true  
+    local listFrame = Instance.new("ScrollingFrame")
+    listFrame.Name = "SelectionList"
+    listFrame.Parent = Window
+    listFrame.Position = UDim2.new(0, 0, 0, 0)
+    listFrame.Size = UDim2.new(0, 250, 0, 300)
+    listFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    listFrame.BorderSizePixel = 0
+    listFrame.ClipsDescendants = true
 
-local listLayout = Instance.new("UIListLayout")  
-listLayout.Padding = UDim.new(0, 2)  
-listLayout.Parent = listFrame  
+    local listLayout = Instance.new("UIListLayout")
+    listLayout.Padding = UDim.new(0, 2)
+    listLayout.Parent = listFrame
 
-Instance.new("UICorner", listFrame).CornerRadius = UDim.new(0, 8)  
+    Instance.new("UICorner", listFrame).CornerRadius = UDim.new(0, 8)
 
--- Botão de fechar lista  
-local closeBtn = Instance.new("TextButton")  
-closeBtn.Size = UDim2.new(0,50,0,30)  
-closeBtn.BackgroundColor3 = Color3.fromRGB(200,50,50)  
-closeBtn.BorderSizePixel = 0  
-closeBtn.Text = "X"  
-closeBtn.TextColor3 = Color3.new(1,1,1)  
-closeBtn.TextScaled = true  
-closeBtn.Font = Enum.Font.GothamBold  
-closeBtn.Parent = listFrame  
-Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 8)  
-closeBtn.MouseButton1Click:Connect(function()  
-	listFrame:Destroy()  
-end)  
+    local closeBtn = Instance.new("TextButton")
+    closeBtn.Size = UDim2.new(0,50,0,30)
+    closeBtn.BackgroundColor3 = Color3.fromRGB(200,50,50)
+    closeBtn.BorderSizePixel = 0
+    closeBtn.Text = "X"
+    closeBtn.TextColor3 = Color3.new(1,1,1)
+    closeBtn.TextScaled = true
+    closeBtn.Font = Enum.Font.GothamBold
+    closeBtn.Parent = listFrame
+    Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 8)
+    closeBtn.MouseButton1Click:Connect(function()
+        listFrame:Destroy()
+    end)
 
--- Adicionar objetos válidos  
-local function createObjectButton(gui)  
-	local btn = Instance.new("TextButton")  
-	btn.Size = UDim2.new(1,0,0,25)  
-	btn.BackgroundColor3 = Color3.fromRGB(70,70,70)  
-	btn.BorderSizePixel = 0  
-	btn.TextScaled = true  
-	btn.Font = Enum.Font.Gotham  
-	btn.TextColor3 = Color3.new(1,1,1)  
-	btn.Text = gui.Name.." | "..gui.ClassName  
-	btn.Parent = listFrame  
+    -- Adicionar objetos válidos
+    local function createObjectButton(gui)
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(1,0,0,25)
+        btn.BackgroundColor3 = Color3.fromRGB(70,70,70)
+        btn.BorderSizePixel = 0
+        btn.TextScaled = true
+        btn.Font = Enum.Font.Gotham
+        btn.TextColor3 = Color3.new(1,1,1)
+        btn.Text = gui.Name.." | "..gui.ClassName
+        btn.Parent = listFrame
 
-	btn.MouseButton1Click:Connect(function()  
-		selectGui(gui)  
-		listFrame:Destroy()  
-	end)  
-end  
+        btn.MouseButton1Click:Connect(function()
+            selectGui(gui)
+            listFrame:Destroy()
+        end)
+    end
 
-for _, gui in ipairs(CoreGui:GetDescendants()) do  
-	if isValidObject(gui) then  
-		createObjectButton(gui)  
-	end  
-end  
-for _, gui in ipairs(PlayerGui:GetDescendants()) do  
-	if isValidObject(gui) then  
-		createObjectButton(gui)  
-	end  
-end
-
+    for _, gui in ipairs(CoreGui:GetDescendants()) do
+        if isValidObject(gui) then
+            createObjectButton(gui)
+        end
+    end
+    for _, gui in ipairs(PlayerGui:GetDescendants()) do
+        if isValidObject(gui) then
+            createObjectButton(gui)
+        end
+    end
 end
 
 -- ====================
--- BOTÃO PRINCIPAL
+-- BOTÃO PRINCIPAL (clicar abre lista / deseleciona)
 -- ====================
 selectButton.MouseButton1Click:Connect(function()
-if selectedObject then
-selectedObject = nil
-if dragButton then
-dragButton:Destroy()
-dragButton = nil
-end
-selectButton.Text = "Selecione Um"
-createSelectionList()
-else
-createSelectionList()
-end
+    if selectedObject then
+        -- desseselect
+        if dragButton then
+            dragButton:Destroy()
+            dragButton = nil
+        end
+        onSelectedObjectChanged(nil) -- atualiza estado (local + remote)
+        selectButton.Text = "Selecione Um"
+        createSelectionList()
+    else
+        createSelectionList()
+    end
 end)
 
+-- Fim do script
 
 print("Não Clique No Botão Play BLZ")
 -- Coloque dentro de: StarterPlayerScripts (LocalScript)
@@ -960,7 +1002,7 @@ loadingText.Text = "Carregando: ..."
 loadingText.Parent = bg
 
 -- PALAVRAS DE CARREGAMENTO
-local steps = {"APIs", "Estruturas", "systems", "botões", "código", "Guis", "UIs", "Drag", "Modules", "add"}
+local steps = {"APIs 🔑", "Estruturas 🧱", "Systems 👨‍💻", "Botões 🔳", "código 📠", "Guis 📁", "UIs 🟦", "Drag ☝️", "Modules 🚀", "Add +"}
 
 -- ANIMAÇÃO DO PROGRESSO
 task.spawn(function()
@@ -979,25 +1021,3 @@ task.spawn(function()
 		BtnGBHub.Visible = true
 	end
 end)
-
---=============
--- Coloque este script dentro de: CoreGui.InspectorGui.Window.BtnCopy (como LocalScript)
---=============
-local btn = script.Parent
-local selectionService = game:GetService("Selection")
-
--- Função que verifica se há algo selecionado
-local function updateButtonVisibility()
-	local selected = selectionService:Get()
-	if #selected > 0 then
-		btn.Visible = false -- Algo está selecionado → botão invisível
-	else
-		btn.Visible = true -- Nada selecionado → botão visível
-	end
-end
-
--- Atualiza imediatamente
-updateButtonVisibility()
-
--- Atualiza sempre que algo for selecionado ou desselecionado
-selectionService.SelectionChanged:Connect(updateButtonVisibility)
