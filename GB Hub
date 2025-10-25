@@ -912,6 +912,66 @@ selectButton.MouseButton1Click:Connect(function()
     end
 end)
 
+-- 🧠 Proteção contra execução duplicada
+if getgenv().InspectorSystemActive then
+	warn("[Inspector System] Já estava ativo. Reiniciando sistema anterior...")
+	getgenv().InspectorSystemActive = false
+	task.wait(0.2)
+end
+
+getgenv().InspectorSystemActive = true
+
+-- ====================
+-- CONFIGURAÇÕES INICIAIS
+-- ====================
+
+local CoreGui = game:GetService("CoreGui")
+local InspectorGui = CoreGui:FindFirstChild("InspectorGui")
+if not InspectorGui then
+	warn("[Inspector System] Nenhuma 'InspectorGui' encontrada no CoreGui!")
+	getgenv().InspectorSystemActive = false
+	return
+end
+
+local Window = InspectorGui:WaitForChild("Window")
+local BtnCopy = Window:WaitForChild("BtnCopy")
+
+-- Valor fictício representando se algo está selecionado
+-- (Você pode conectar isso ao seu sistema de seleção real)
+local selectedObject = nil
+
+-- ====================
+-- FUNÇÃO PRINCIPAL
+-- ====================
+
+local function updateButtonVisibility()
+	if not getgenv().InspectorSystemActive then return end
+	if selectedObject then
+		BtnCopy.Visible = false
+	else
+		BtnCopy.Visible = true
+	end
+end
+
+-- ====================
+-- SIMULAÇÃO DE SELEÇÃO (exemplo)
+-- ====================
+-- Aqui você deve conectar o seu sistema real de seleção:
+-- Quando algo for selecionado, defina selectedObject = <objeto>
+-- Quando nada estiver selecionado, defina selectedObject = nil
+
+-- Exemplo demonstrativo:
+task.spawn(function()
+	while getgenv().InspectorSystemActive do
+		updateButtonVisibility()
+		task.wait(0.1)
+	end
+end)
+
+-- ====================
+-- FINALIZAÇÃO AUTOMÁTICA AO REEXECUTAR
+-- ====================
+-- O script antigo é automaticamente interrompido quando o getgenv().InspectorSystemActive for trocado.
 
 -- Fim do script
 
