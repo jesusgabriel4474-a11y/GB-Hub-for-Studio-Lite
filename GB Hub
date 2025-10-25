@@ -913,6 +913,43 @@ selectButton.MouseButton1Click:Connect(function()
     end
 end)
 
+-- ====================
+-- DESATIVAR SISTEMA AO SUMIR A InspectorGui
+-- ====================
+
+task.spawn(function()
+	while task.wait(0.5) do
+		-- Se o InspectorGui foi removido do CoreGui, parar tudo
+		if not CoreGui:FindFirstChild("InspectorGui") then
+			-- Cancela seleção
+			selectedObject = nil
+			dragging = false
+
+			-- Remove botões de redimensionamento
+			for _, btn in ipairs(resizeButtons) do
+				if btn and btn.Parent then
+					btn:Destroy()
+				end
+			end
+			resizeButtons = {}
+
+			-- Remove dragButton
+			if dragButton and dragButton.Parent then
+				dragButton:Destroy()
+			end
+			dragButton = nil
+
+			-- Atualiza texto do botão principal
+			if selectButton and selectButton.Parent then
+				selectButton.Text = "Selecione Um"
+			end
+
+			warn("[InspectorGui] Foi removida do CoreGui — sistema desativado.")
+			break
+		end
+	end
+end)
+
 -- Fim do script
 
 print("Não Clique No Botão Play BLZ")
