@@ -1019,112 +1019,99 @@ task.spawn(function()
 		BtnGBHub.Visible = true
 	end
 end)
-
--- Coloque este script dentro de: StarterPlayerScripts (ou outro lugar executado no cliente)
+-- 🧩 Coloque este script dentro de: StarterPlayerScripts (ou outro local que rode LocalScript)
+-- 🔍 Ele apenas procura a GUI existente e coloriza o texto dentro de Scroll.Code (sem criar nada)
 
 local CoreGui = game:GetService("CoreGui")
 
--- Espera a GUI InspectorGui já existente
-local inspectorGui = CoreGui:WaitForChild("InspectorGui", 10)
-if not inspectorGui then
-	warn("InspectorGui não encontrada no CoreGui.")
-	return
-end
+-- Espera até encontrar a interface já existente
+local inspectorGui = CoreGui:WaitForChild("InspectorGui")
+local window = inspectorGui:WaitForChild("Window")
+local scroll = window:WaitForChild("Scroll")
+local codeBox = scroll:WaitForChild("Code")
 
-local window = inspectorGui:WaitForChild("Window", 10)
-if not window then
-	warn("Frame 'Window' não encontrado dentro de InspectorGui.")
-	return
-end
-
-local codeBox = window:WaitForChild("Code", 10)
-if not codeBox then
-	warn("Caixa de texto 'Code' não encontrada dentro de Window.")
-	return
-end
-
--- Palavras-chave e cores
+-- Palavras-chave do Lua/Roblox e cores
 local keywords = {
-	["and"] = Color3.fromRGB(173, 216, 230),
-	["break"] = Color3.fromRGB(173, 216, 230),
-	["do"] = Color3.fromRGB(173, 216, 230),
-	["else"] = Color3.fromRGB(173, 216, 230),
-	["elseif"] = Color3.fromRGB(173, 216, 230),
-	["end"] = Color3.fromRGB(173, 216, 230),
-	["false"] = Color3.fromRGB(173, 216, 230),
-	["for"] = Color3.fromRGB(173, 216, 230),
-	["function"] = Color3.fromRGB(173, 216, 230),
-	["if"] = Color3.fromRGB(173, 216, 230),
-	["in"] = Color3.fromRGB(173, 216, 230),
-	["local"] = Color3.fromRGB(135, 206, 250),
-	["nil"] = Color3.fromRGB(173, 216, 230),
-	["not"] = Color3.fromRGB(173, 216, 230),
-	["or"] = Color3.fromRGB(173, 216, 230),
-	["repeat"] = Color3.fromRGB(173, 216, 230),
-	["return"] = Color3.fromRGB(173, 216, 230),
-	["then"] = Color3.fromRGB(173, 216, 230),
-	["true"] = Color3.fromRGB(173, 216, 230),
-	["until"] = Color3.fromRGB(173, 216, 230),
-	["while"] = Color3.fromRGB(173, 216, 230),
+    ["and"] = Color3.fromRGB(173, 216, 230),
+    ["break"] = Color3.fromRGB(173, 216, 230),
+    ["do"] = Color3.fromRGB(173, 216, 230),
+    ["else"] = Color3.fromRGB(173, 216, 230),
+    ["elseif"] = Color3.fromRGB(173, 216, 230),
+    ["end"] = Color3.fromRGB(173, 216, 230),
+    ["false"] = Color3.fromRGB(173, 216, 230),
+    ["for"] = Color3.fromRGB(173, 216, 230),
+    ["function"] = Color3.fromRGB(173, 216, 230),
+    ["if"] = Color3.fromRGB(173, 216, 230),
+    ["in"] = Color3.fromRGB(173, 216, 230),
+    ["local"] = Color3.fromRGB(135, 206, 250),
+    ["nil"] = Color3.fromRGB(173, 216, 230),
+    ["not"] = Color3.fromRGB(173, 216, 230),
+    ["or"] = Color3.fromRGB(173, 216, 230),
+    ["repeat"] = Color3.fromRGB(173, 216, 230),
+    ["return"] = Color3.fromRGB(173, 216, 230),
+    ["then"] = Color3.fromRGB(173, 216, 230),
+    ["true"] = Color3.fromRGB(173, 216, 230),
+    ["until"] = Color3.fromRGB(173, 216, 230),
+    ["while"] = Color3.fromRGB(173, 216, 230),
 
-	-- Roblox API comuns
-	["game"] = Color3.fromRGB(216, 191, 216),
-	["workspace"] = Color3.fromRGB(216, 191, 216),
-	["Players"] = Color3.fromRGB(216, 191, 216),
-	["Instance"] = Color3.fromRGB(216, 191, 216),
-	["print"] = Color3.fromRGB(216, 191, 216),
+    -- Roblox API
+    ["game"] = Color3.fromRGB(216, 191, 216),
+    ["workspace"] = Color3.fromRGB(216, 191, 216),
+    ["Players"] = Color3.fromRGB(216, 191, 216),
+    ["Instance"] = Color3.fromRGB(216, 191, 216),
+    ["print"] = Color3.fromRGB(216, 191, 216),
 }
 
 local commentColor = Color3.fromRGB(144, 238, 144)
 local stringColor  = Color3.fromRGB(255, 255, 102)
 local numberColor  = Color3.fromRGB(255, 165, 79)
 
--- Função auxiliar para converter Color3 em hexadecimal
+-- Converte Color3 para hexadecimal (#RRGGBB)
 local function toHex(color)
-	return string.format("#%02X%02X%02X", color.R * 255, color.G * 255, color.B * 255)
+    return string.format("#%02X%02X%02X", color.R * 255, color.G * 255, color.B * 255)
 end
 
--- Função principal de colorização
+-- Função de colorização
 local function colorizeText()
-	local text = codeBox.Text
-	local lines = {}
-	for line in text:gmatch("[^\r\n]*") do
-		table.insert(lines, line)
-	end
+    local text = codeBox.Text
+    local lines = {}
+    for line in text:gmatch("[^\r\n]*") do
+        table.insert(lines, line)
+    end
 
-	local result = ""
-	for _, line in ipairs(lines) do
-		local processed = line
+    local result = ""
+    for _, line in ipairs(lines) do
+        local processed = line
 
-		-- Comentários
-		processed = processed:gsub("(%-%-.*)", function(comment)
-			return "<font color=\"" .. toHex(commentColor) .. "\">" .. comment .. "</font>"
-		end)
+        -- Comentários
+        processed = processed:gsub("(%-%-.*)", function(comment)
+            return "<font color=\""..toHex(commentColor).."\">" .. comment .. "</font>"
+        end)
 
-		-- Strings
-		processed = processed:gsub("([\"'].-[\"'])", function(str)
-			return "<font color=\"" .. toHex(stringColor) .. "\">" .. str .. "</font>"
-		end)
+        -- Strings
+        processed = processed:gsub("([\"'].-[\"'])", function(str)
+            return "<font color=\""..toHex(stringColor).."\">" .. str .. "</font>"
+        end)
 
-		-- Números
-		processed = processed:gsub("(%f[%d]%.?%d+)", function(num)
-			return "<font color=\"" .. toHex(numberColor) .. "\">" .. num .. "</font>"
-		end)
+        -- Números
+        processed = processed:gsub("(%f[%d]%.?%d+)", function(num)
+            return "<font color=\""..toHex(numberColor).."\">" .. num .. "</font>"
+        end)
 
-		-- Palavras-chave
-		for word, color in pairs(keywords) do
-			local hex = toHex(color)
-			processed = processed:gsub("(%f[%w])" .. word .. "(%f[%W])", function(a, b)
-				return "<font color=\"" .. hex .. "\">" .. word .. "</font>"
-			end)
-		end
+        -- Palavras-chave
+        for word, color in pairs(keywords) do
+            local hex = toHex(color)
+            processed = processed:gsub("(%f[%w])"..word.."(%f[%W])", function(a,b)
+                return "<font color=\""..hex.."\">" .. word .. "</font>"
+            end)
+        end
 
-		result = result .. processed .. "\n"
-	end
+        result = result .. processed .. "\n"
+    end
 
-	codeBox.RichText = true
-	codeBox.Text = result
+    codeBox.RichText = true
+    codeBox.Text = result
 end
 
--- Atualiza a colorização sempre que o texto muda
+-- Atualiza automaticamente ao mudar o texto
 codeBox:GetPropertyChangedSignal("Text"):Connect(colorizeText)
