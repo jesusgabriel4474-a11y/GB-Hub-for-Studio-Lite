@@ -1019,3 +1019,119 @@ task.spawn(function()
 		BtnGBHub.Visible = true
 	end
 end)
+
+-- Criando a interface
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "InspectorGui"
+screenGui.Parent = playerGui
+
+local frame = Instance.new("Frame")
+frame.Name = "Window"
+frame.Size = UDim2.new(0, 600, 0, 400)
+frame.Position = UDim2.new(0.2, 0, 0.2, 0)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.Parent = screenGui
+
+local codeBox = Instance.new("TextBox")
+codeBox.Name = "Code"
+codeBox.Size = UDim2.new(1, -20, 1, -20)
+codeBox.Position = UDim2.new(0, 10, 0, 10)
+codeBox.ClearTextOnFocus = false
+codeBox.MultiLine = true
+codeBox.TextWrapped = true
+codeBox.Font = Enum.Font.Code
+codeBox.TextSize = 18
+codeBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+codeBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+codeBox.RichText = true
+codeBox.Parent = frame
+
+-- Palavras‑chave do Lua/Roblox
+local keywords = {
+    -- Lua padrão
+    ["and"] = Color3.fromRGB(173, 216, 230),
+    ["break"] = Color3.fromRGB(173, 216, 230),
+    ["do"] = Color3.fromRGB(173, 216, 230),
+    ["else"] = Color3.fromRGB(173, 216, 230),
+    ["elseif"] = Color3.fromRGB(173, 216, 230),
+    ["end"] = Color3.fromRGB(173, 216, 230),
+    ["false"] = Color3.fromRGB(173, 216, 230),
+    ["for"] = Color3.fromRGB(173, 216, 230),
+    ["function"] = Color3.fromRGB(173, 216, 230),
+    ["if"] = Color3.fromRGB(173, 216, 230),
+    ["in"] = Color3.fromRGB(173, 216, 230),
+    ["local"] = Color3.fromRGB(135, 206, 250),
+    ["nil"] = Color3.fromRGB(173, 216, 230),
+    ["not"] = Color3.fromRGB(173, 216, 230),
+    ["or"] = Color3.fromRGB(173, 216, 230),
+    ["repeat"] = Color3.fromRGB(173, 216, 230),
+    ["return"] = Color3.fromRGB(173, 216, 230),
+    ["then"] = Color3.fromRGB(173, 216, 230),
+    ["true"] = Color3.fromRGB(173, 216, 230),
+    ["until"] = Color3.fromRGB(173, 216, 230),
+    ["while"] = Color3.fromRGB(173, 216, 230),
+    -- Você pode adicionar mais aqui, por exemplo API do Roblox:
+    ["game"] = Color3.fromRGB(216, 191, 216),  -- lilás claro
+    ["workspace"] = Color3.fromRGB(216, 191, 216),
+    ["Players"] = Color3.fromRGB(216, 191, 216),
+    ["Instance"] = Color3.fromRGB(216, 191, 216),
+    ["print"] = Color3.fromRGB(216, 191, 216),
+}
+
+local commentColor = Color3.fromRGB(144, 238, 144)   -- verde claro
+local stringColor  = Color3.fromRGB(255, 255, 102)   -- amarelo claro
+local numberColor  = Color3.fromRGB(255, 165, 79)    -- laranja claro
+
+-- Função para converter Color3 para hex
+local function toHex(color)
+    return string.format("#%02X%02X%02X", color.R*255, color.G*255, color.B*255)
+end
+
+-- Função de realce de sintaxe
+local function colorizeText()
+    local text = codeBox.Text
+    local lines = {}
+    for line in text:gmatch("[^\r\n]*") do
+        table.insert(lines, line)
+    end
+    local result = ""
+    for _, line in ipairs(lines) do
+        local processed = line
+
+        -- Realce de comentário (linha que começa com -- ou contém --)
+        processed = processed:gsub("(%-%-.*)", function(comment)
+            return "<font color=\""..toHex(commentColor).."\">"..comment.."</font>"
+        end)
+
+        -- Realce de strings (aspas simples ou duplas)
+        processed = processed:gsub("([\"'].-[\"'])", function(str)
+            return "<font color=\""..toHex(stringColor).."\">"..str.."</font>"
+        end)
+
+        -- Realce de números
+        processed = processed:gsub("(%f[%d]%.?%d+)", function(num)
+            return "<font color=\""..toHex(numberColor).."\">"..num.."</font>"
+        end)
+
+        -- Realce de palavras‑chave
+        for word, color in pairs(keywords) do
+            local hex = toHex(color)
+            -- usa fronteira de palavra para evitar capturar em meio outras palavras
+            processed = processed:gsub("(%f[%w])"..word.."(%f[%W])", function(a,b)
+                return "<font color=\""..hex.."\">"..word.."</font>"
+            end)
+        end
+
+        result = result .. processed .. "\n"
+    end
+
+    codeBox.RichText = true
+    codeBox.Text = result
+end
+
+-- Conecta à alteração de texto
+codeBox:GetPropertyChangedSignal("Text"):Connect(colorizeText)
