@@ -1019,51 +1019,36 @@ task.spawn(function()
 		BtnGBHub.Visible = true
 	end
 end)
+-- Referência ao código de colorização (você pode integrar isso no seu sistema)
+local function colorizeText(text)
+    -- Palavras-chave e cores
+    local keywords = {
+        ["and"]=Color3.fromRGB(173,216,230), ["break"]=Color3.fromRGB(173,216,230),
+        ["do"]=Color3.fromRGB(173,216,230), ["else"]=Color3.fromRGB(173,216,230),
+        ["elseif"]=Color3.fromRGB(173,216,230), ["end"]=Color3.fromRGB(173,216,230),
+        ["false"]=Color3.fromRGB(173,216,230), ["for"]=Color3.fromRGB(173,216,230),
+        ["function"]=Color3.fromRGB(173,216,230), ["if"]=Color3.fromRGB(173,216,230),
+        ["in"]=Color3.fromRGB(173,216,230), ["local"]=Color3.fromRGB(135,206,250),
+        ["nil"]=Color3.fromRGB(173,216,230), ["not"]=Color3.fromRGB(173,216,230),
+        ["or"]=Color3.fromRGB(173,216,230), ["repeat"]=Color3.fromRGB(173,216,230),
+        ["return"]=Color3.fromRGB(173,216,230), ["then"]=Color3.fromRGB(173,216,230),
+        ["true"]=Color3.fromRGB(173,216,230), ["until"]=Color3.fromRGB(173,216,230),
+        ["while"]=Color3.fromRGB(173,216,230),
+        ["game"]=Color3.fromRGB(216,191,216), ["workspace"]=Color3.fromRGB(216,191,216),
+        ["Players"]=Color3.fromRGB(216,191,216), ["Instance"]=Color3.fromRGB(216,191,216),
+        ["print"]=Color3.fromRGB(216,191,216),
+    }
 
--- 🧩 LocalScript: colorização do InspectorGui usando seu sistema
--- 🛑 NÃO cria GUI, só pega a existente
+    local commentColor = Color3.fromRGB(144,238,144)
+    local stringColor  = Color3.fromRGB(255,255,102)
+    local numberColor  = Color3.fromRGB(255,165,79)
 
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local CoreGui = game:GetService("CoreGui")
-local UserInputService = game:GetService("UserInputService")
+    -- Função para converter Color3 para hexadecimal (#RRGGBB)
+    local function toHex(color)
+        return string.format("#%02X%02X%02X", color.R*255, color.G*255, color.B*255)
+    end
 
--- Referências da GUI existente
-local Inspector = CoreGui:WaitForChild("InspectorGui")
-local Frame = Inspector:WaitForChild("Window")
-local Scroll = Frame:WaitForChild("Scroll")
-local Code = Scroll:WaitForChild("Code")
-local BtnCopy = Frame:FindFirstChildOfClass("TextButton") or Frame:FindFirstChild("Copiar")
-
--- Palavras-chave e cores (mantive só Lua + Roblox API)
-local keywords = {
-    ["and"]=Color3.fromRGB(173,216,230), ["break"]=Color3.fromRGB(173,216,230),
-    ["do"]=Color3.fromRGB(173,216,230), ["else"]=Color3.fromRGB(173,216,230),
-    ["elseif"]=Color3.fromRGB(173,216,230), ["end"]=Color3.fromRGB(173,216,230),
-    ["false"]=Color3.fromRGB(173,216,230), ["for"]=Color3.fromRGB(173,216,230),
-    ["function"]=Color3.fromRGB(173,216,230), ["if"]=Color3.fromRGB(173,216,230),
-    ["in"]=Color3.fromRGB(173,216,230), ["local"]=Color3.fromRGB(135,206,250),
-    ["nil"]=Color3.fromRGB(173,216,230), ["not"]=Color3.fromRGB(173,216,230),
-    ["or"]=Color3.fromRGB(173,216,230), ["repeat"]=Color3.fromRGB(173,216,230),
-    ["return"]=Color3.fromRGB(173,216,230), ["then"]=Color3.fromRGB(173,216,230),
-    ["true"]=Color3.fromRGB(173,216,230), ["until"]=Color3.fromRGB(173,216,230),
-    ["while"]=Color3.fromRGB(173,216,230),
-    ["game"]=Color3.fromRGB(216,191,216), ["workspace"]=Color3.fromRGB(216,191,216),
-    ["Players"]=Color3.fromRGB(216,191,216), ["Instance"]=Color3.fromRGB(216,191,216),
-    ["print"]=Color3.fromRGB(216,191,216),
-}
-
-local commentColor = Color3.fromRGB(144,238,144)
-local stringColor  = Color3.fromRGB(255,255,102)
-local numberColor  = Color3.fromRGB(255,165,79)
-
-local function toHex(color)
-    return string.format("#%02X%02X%02X", color.R*255, color.G*255, color.B*255)
-end
-
--- Função de colorização (usando só o texto que já existe)
-local function colorizeCode()
-    local text = Code.Text
+    -- Processa o texto e aplica a colorização
     local lines = {}
     for line in text:gmatch("[^\r\n]*") do
         table.insert(lines, line)
@@ -1088,47 +1073,22 @@ local function colorizeCode()
         result = result..processed.."\n"
     end
 
-    Code.RichText = true
-    Code.Text = result
+    return result
 end
 
--- Atualização otimizada: coloriza só quando o texto mudar
+-- Funciona diretamente no seu código
+local function colorizeCode()
+    local text = Code.Text -- Pegando o texto do campo Code
+    local coloredText = colorizeText(text) -- Coloriza o texto
+    Code.RichText = true
+    Code.Text = coloredText -- Atualiza o texto colorido no Code
+end
+
+-- Atualização otimizada
 local lastText = Code.Text
 Code:GetPropertyChangedSignal("Text"):Connect(function()
     if Code.Text ~= lastText then
         lastText = Code.Text
-        task.spawn(colorizeCode) -- spawn para não travar a interface
+        task.spawn(colorizeCode) -- Aplique a colorização de maneira assíncrona
     end
 end)
-
--- ========================
--- Copiar para clipboard (mantido do seu sistema)
--- ========================
-if BtnCopy then
-    BtnCopy.MouseButton1Click:Connect(function()
-        local ok = false
-        if typeof(setclipboard) == "function" then
-            pcall(function() setclipboard(Code.Text) end)
-            ok = true
-        end
-
-        local StarterGui = game:GetService("StarterGui")
-        if ok then
-            pcall(function()
-                StarterGui:SetCore("SendNotification", {
-                    Title = "Copiado com sucesso",
-                    Text = "O código foi copiado!",
-                    Duration = 5
-                })
-            end)
-        else
-            pcall(function()
-                StarterGui:SetCore("SendNotification", {
-                    Title = "Aviso",
-                    Text = "Não foi possível copiar automaticamente.",
-                    Duration = 5
-                })
-            end)
-        end
-    end)
-end
