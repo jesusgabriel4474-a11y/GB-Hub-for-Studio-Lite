@@ -203,7 +203,7 @@ Scroll.AutomaticCanvasSize = Enum.AutomaticSize.None  -- agora manual
 Scroll.Parent = Frame
 
 -- LABEL DE CÓDIGO
-local Code = Instance.new("TextBox")
+local Code = Instance.new("TextLabel")
 Code.Name = "Code"
 Code.BackgroundTransparency = 1
 Code.TextXAlignment = Enum.TextXAlignment.Left
