@@ -1140,4 +1140,82 @@ local function renderCodeLines(codeText)
     end
 end
 
+--=============================>
+-- BLOCO EXTRA — CONTROLE DE Interactable (SELEÇÃO / DESELEÇÃO)
+-- Cole ESTE BLOCO NO FINAL do script original
+--=============================>
+
+-- guarda estados originais para restaurar depois
+local __interactableCache = {}
+
+-- percorre o objeto selecionado + TODOS os pais (até a raiz)
+local function getHierarchy(obj)
+    local list = {}
+    local current = obj
+    while current do
+        table.insert(list, current)
+        current = current.Parent
+    end
+    return list
+end
+
+-- aplica Interactable = false em toda a hierarquia
+local function disableInteractableHierarchy(obj)
+    __interactableCache = {}
+
+    for _, inst in ipairs(getHierarchy(obj)) do
+        -- só tenta em objetos de UI
+        if inst:IsA("GuiObject") then
+            local okGet, oldValue = pcall(function()
+                return inst.Interactable
+            end)
+
+            if okGet then
+                -- salva valor original
+                __interactableCache[inst] = oldValue
+
+                -- desativa
+                pcall(function()
+                    inst.Interactable = false
+                end)
+            end
+        end
+    end
+end
+
+-- restaura Interactable original em toda a hierarquia
+local function restoreInteractableHierarchy()
+    for inst, oldValue in pairs(__interactableCache) do
+        if inst and inst.Parent then
+            pcall(function()
+                inst.Interactable = oldValue
+            end)
+        end
+    end
+    __interactableCache = {}
+end
+
+-- =============================
+-- INTEGRAÇÃO COM A SELEÇÃO
+-- =============================
+-- sobrescreve o comportamento quando muda o objeto selecionado
+do
+    local _oldOnSelectedObjectChanged = onSelectedObjectChanged
+
+    function onSelectedObjectChanged(newObj)
+        -- se tinha algo selecionado antes, restaura
+        if selectedObject then
+            restoreInteractableHierarchy()
+        end
+
+        -- chama lógica original
+        _oldOnSelectedObjectChanged(newObj)
+
+        -- se agora tem um novo selecionado, desativa toda a hierarquia
+        if newObj then
+            disableInteractableHierarchy(newObj)
+        end
+    end
+end
+
 refresh()
