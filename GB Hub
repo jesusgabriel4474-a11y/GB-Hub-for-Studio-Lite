@@ -1082,19 +1082,6 @@ local function colorize(text)
     return string.format('<font color="%s">%s</font>', Theme.default, text)
 end
 
--- CRIA UMA LINHA (TextLabel)
-local function createLine(index, text)
-    local line = Instance.new("TextLabel")
-    line.Name = "Line_"..index
-    line.Parent = Code
-    line.BackgroundTransparency = 1
-    line.Size = UDim2.new(1, -6, 0, 16)
-    line.RichText = true
-    line.TextWrapped = false
-    line.TextScaled = false
-    line.Font = Enum.Font.Code
-    line.TextSize = 13
-
     line.Text =
         '<font color="'..Theme.lineNumber..'">'..index..'</font>  ' ..
         colorize(text)
@@ -1115,3 +1102,42 @@ local function renderCodeLines(codeText)
         index += 1
     end
 end
+
+
+--==============================-->
+-- FUNÇÕES DE RENDER (PRIMEIRO)
+--==============================-->
+
+local function clearLines()
+    for _, c in ipairs(Code:GetChildren()) do
+        if c:IsA("TextLabel") then
+            c:Destroy()
+        end
+    end
+end
+
+local function renderCodeLines(codeText)
+    clearLines()
+
+    local y = 0
+    local index = 1
+
+    for line in codeText:gmatch("[^\n]*") do
+        local lineLabel = Instance.new("TextLabel")
+        lineLabel.Name = "Line_" .. index
+        lineLabel.Parent = Code
+        lineLabel.BackgroundTransparency = 1
+        lineLabel.Size = UDim2.new(1, -6, 0, 16)
+        lineLabel.Position = UDim2.new(0, 3, 0, y)
+        lineLabel.Font = Enum.Font.Code
+        lineLabel.TextSize = 13
+        lineLabel.RichText = true
+        lineLabel.TextWrapped = false
+        lineLabel.Text = tostring(index) .. "  " .. line
+
+        y += 16
+        index += 1
+    end
+end
+
+refresh()
