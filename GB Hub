@@ -261,7 +261,7 @@ local selectionConnection = nil
 if BtnCopy then
     BtnCopy.MouseButton1Click:Connect(function()
         local fullCode = buildCode()
-        ...
+
     end)
 end
     
